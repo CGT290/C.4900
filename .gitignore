@@ -1,0 +1,19 @@
+# Ignore dependencies
+node_modules/
+
+# Ignore Expo-specific directories
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+#Ignore debug and cache files
+npm-debug.*
+yarn-debug.*
+yarn-error.log
+
+# Ignore local environment files
+.env*
+
+# TypeScript build info
+*.tsbuildinfo
