@@ -1,9 +1,10 @@
-import { Text, View, ScrollView, StyleSheet } from "react-native";
+import { Text, View, ScrollView} from "react-native";
 
 export default function Index() {
   return (
     <ScrollView>
     <View>
+      <Text>Welcome to Transit App</Text>
       <Text>Edit app/index.tsx to edit this screen.</Text>
 
       <Text>Edit app/index.tsx to edit this screen.</Text>
@@ -15,18 +16,17 @@ export default function Index() {
   );
 }
 
-const Styles = StyleSheet.create({
-  container: {
-    flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        color: "red",
 
-  },
-  Text: {
-    color: "red",
-    
-  }
+/*
+<ScrollView className="flex-1 bg-gray-100">
+    <View className="flex-1 bg-gray-100">
+      <Text className="text-2xl">Welcome to Transit App</Text>
+      <Text>Edit app/index.tsx to edit this screen.</Text>
 
-}
-);
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+    </View>
+    </ScrollView>
+*/
