@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const LiveFeed = () => {
+export default function LiveFeed(){
   return (
     <View style={styles.container}>
       <Text>Hello, React Native!</Text>
@@ -17,4 +17,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LiveFeed;

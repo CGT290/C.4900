@@ -1,7 +1,9 @@
 import { Text, View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard} from "react-native";
 import AntDesign from '@expo/vector-icons/AntDesign';
+import {Link} from "expo-router";
 
 import { useState } from "react";
+import { useNavigation } from "expo-router";
 
 export default function Index() {
   const [text, setText] = useState("");
@@ -26,8 +28,29 @@ export default function Index() {
             <Text style={styles.optionText}>Options</Text>
             <Text style={styles.departText}>Departs In</Text>
           </View>
+           
+           
+          <View style={styles.TransportOptions}>
+            {/*This is just to get the idea of how the box will look will replace this soon */}
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+            <Text></Text>
+          </View>
 
-          <View style={styles.TransportOptions}></View>
+          
 
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -78,7 +101,7 @@ const styles = StyleSheet.create({
   },
   optionText:{
     color: 'rgb(0,0,128)',
-    marginTop: 15,
+    marginTop: 30,
     position: 'absolute',
     left: 5,
     fontSize: 25
@@ -87,7 +110,7 @@ const styles = StyleSheet.create({
 
   departText:{
     color: "rgb(0,0,128)",
-    marginTop: 15,
+    marginTop: 30,
     position: 'absolute',
     right: 0,
     fontSize: 25,
@@ -107,6 +130,14 @@ const styles = StyleSheet.create({
     right: 0,
     marginLeft: 10,
   },
+  gotToFeed:{
+    fontSize: 15,
+    textAlign: 'center',
+    paddingTop: 15,
+    textDecorationLine: 'underline'
+
+
+  }
  
 
 });
