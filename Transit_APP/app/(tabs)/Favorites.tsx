@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const FavoritesPage = () => {
+export default function FavoritesPage()  {
   return (
     <View style={styles.container}>
-      <Text>Hello, React Native!</Text>
+      <Text style = {styles.HeaderText}>Favorite Destinations</Text>
+
+      <View style= {styles.FavoritesContainer}></View>
     </View>
   );
 };
@@ -12,9 +14,16 @@ const FavoritesPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    
+  },
+  HeaderText:{
+    alignSelf: 'center',
+    fontSize: 20,
+    marginTop: 5,
+    fontWeight: 'bold',
+  },
+  FavoritesContainer:{
+
   },
 });
 
-export default FavoritesPage;

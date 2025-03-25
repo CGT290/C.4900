@@ -16,7 +16,7 @@ export default function TabsLayout() {
   */
   return (
     <Tabs screenOptions={{
-      tabBarActiveTintColor: "rgb(0,120,15)",  //To control the color of current tab
+      tabBarActiveTintColor: "green",  //To control the color of current tab
        
       }}
     >

@@ -1,9 +1,8 @@
 import { Text, View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard} from "react-native";
 import AntDesign from '@expo/vector-icons/AntDesign';
-import {Link} from "expo-router";
 
 import { useState } from "react";
-import { useNavigation } from "expo-router";
+
 
 export default function Index() {
   const [text, setText] = useState("");
