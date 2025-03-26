@@ -1,7 +1,7 @@
 import React, { useEffect,useState} from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView , Pressable} from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 
 export default function FavoritesPage({})  {
@@ -16,24 +16,35 @@ export default function FavoritesPage({})  {
     }
   }, [new_Favorites]);
 
+ //To remove items 
+ const removeFavorite = (item) =>{
+  setFavorites((prevFavorites) => 
+    prevFavorites.filter((favorite) => favorite !== item)
+  );
+ };
   return (
     <View style={styles.container}>
-      <Text style = {styles.HeaderText}>Favorite Destinations</Text>
+  <Text style={styles.HeaderText}>Favorite Destinations</Text>
 
-      <ScrollView style= {styles.FavoritesContainer} contentContainerStyle = {styles.FavoritesContainer}> 
-        <Text style={styles.firstItem}>{favorites[0]}</Text>
-        <Text style={styles.restOfItems}>{favorites[1]}</Text>
-        <Text style={styles.restOfItems}>{favorites[2]}</Text>
-        <Text style={styles.restOfItems}>{favorites[3]}</Text>
-        <Text style={styles.restOfItems}>{favorites[4]}</Text>
-        <Text style={styles.restOfItems}>{favorites[5]}</Text>
-        <Text style={styles.restOfItems}>{favorites[6]}</Text>
-        <Text style={styles.restOfItems}>{favorites[7]}</Text>
-        <Text style={styles.restOfItems}>{favorites[8]}</Text>
-        <Text style={styles.restOfItems}>{favorites[9]}</Text>
-        <Text style={styles.lastItem}>{favorites[10]}</Text>
-      </ScrollView>
-    </View>
+  
+    <ScrollView
+      style={styles.FavoritesContainer}
+      contentContainerStyle={styles.FavoritesContentContainer}
+    >
+      {favorites.map((item, index) => (
+        <View key={index} style={styles.rowOfItem}>
+          <View style={styles.itemContainer}>
+            <Text style={styles.itemText}>{item}</Text>
+          </View>
+          <Pressable onPress={() => removeFavorite(item)}>
+            <MaterialIcons name="delete" size={30} color="black" style={styles.deleteIcon} />
+          </Pressable>
+        </View>
+      ))}
+    </ScrollView>
+
+</View>
+
   );
 };
 
@@ -51,44 +62,41 @@ const styles = StyleSheet.create({
   },
   FavoritesContainer:{
     
-   // borderWidth: 2,
+   //borderWidth: 2,
    // borderRadius: 5,
-    maxHeight: 600,
-    marginTop: 15,
+    maxHeight: 750,
+    marginTop: 10,
     backgroundColor: 'rgb(245,245,245)',
 
   },
   FavoritesContentContainer:{
     alignItems: 'center',
   },
-  restOfItems:{
-    fontSize: 15,
-    marginTop: 10,
-    marginBottom: 8,
-    borderWidth: 2,
-    borderRadius: 5,
-    padding: 2,
-    marginHorizontal: 40,
+ 
+  rowOfItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    width: '100%',
   },
-  firstItem:{
-    fontSize: 15,
-    marginBottom: 8,
-    marginTop: 15,
+  itemContainer: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 8,
     borderWidth: 2,
-    borderRadius: 5,
-    padding: 2,
-    marginHorizontal: 40,
-
-  },
-  lastItem:{
-    fontSize: 15,
-    marginTop: 8,
+    marginHorizontal:5,
     marginBottom: 15,
-    borderWidth: 2,
-    borderRadius: 5,
-    padding: 2,
-    marginHorizontal: 40,
-  }
+    marginTop: 15,
+  
+  },
+  itemText: {
+    fontSize: 15,
+    color: 'black',
+  },
+  deleteIcon: {
+    marginRight: 10,
+  },
   
 } );
 

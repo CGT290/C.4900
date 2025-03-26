@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
+
 export default function TabsLayout() {
   return (
     //Instead of changing the text of the tabs look into changing the icon colors
