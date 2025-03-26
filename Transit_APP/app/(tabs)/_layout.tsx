@@ -5,7 +5,8 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: "green", headerShown: false }}>
+    //Instead of changing the text of the tabs look into changing the icon colors
+    <Tabs screenOptions={{ tabBarActiveTintColor: "blue", headerShown: false }}>
       <Tabs.Screen
         name="index"
         options={{

@@ -50,22 +50,7 @@ console.log("Navigating to Favorites with params:", {
            
           <View style={styles.TransportOptions}>
             {/*This is just to get the idea of how the box will look will replace this soon */}
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
-            <Text></Text>
+            
           </View>
 
           
@@ -142,8 +127,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderWidth: 0.8,
     padding: 15,
-    
     marginTop: 15,
+    maxHeight: 20,
 
   },
   FavoriteIcon:{

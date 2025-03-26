@@ -90,7 +90,6 @@ const styles = StyleSheet.create({
 
   },
   feedContainer:{
-   // flex: 0.87,
     maxHeight: 550,
     flexDirection: 'column', //to adjust the content(text in this case) to be top-bottom
     borderWidth: 2,
@@ -111,8 +110,6 @@ const styles = StyleSheet.create({
   },
   textStyle:{
     fontSize: 12,
-    
-
   },
   scrollContents:{
     alignContent: 'center',

@@ -1,5 +1,5 @@
 import React, { useEffect,useState} from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
 
@@ -16,20 +16,23 @@ export default function FavoritesPage({})  {
     }
   }, [new_Favorites]);
 
-  
- 
-
   return (
     <View style={styles.container}>
       <Text style = {styles.HeaderText}>Favorite Destinations</Text>
 
-      <View style= {styles.FavoritesContainer}>
-        {favorites.map((item, index) => (
-          <Text key={index} style={styles.favoritesContent}
-          >{item}
-          </Text>
-        ))}
-      </View>
+      <ScrollView style= {styles.FavoritesContainer} contentContainerStyle = {styles.FavoritesContainer}> 
+        <Text style={styles.firstItem}>{favorites[0]}</Text>
+        <Text style={styles.restOfItems}>{favorites[1]}</Text>
+        <Text style={styles.restOfItems}>{favorites[2]}</Text>
+        <Text style={styles.restOfItems}>{favorites[3]}</Text>
+        <Text style={styles.restOfItems}>{favorites[4]}</Text>
+        <Text style={styles.restOfItems}>{favorites[5]}</Text>
+        <Text style={styles.restOfItems}>{favorites[6]}</Text>
+        <Text style={styles.restOfItems}>{favorites[7]}</Text>
+        <Text style={styles.restOfItems}>{favorites[8]}</Text>
+        <Text style={styles.restOfItems}>{favorites[9]}</Text>
+        <Text style={styles.lastItem}>{favorites[10]}</Text>
+      </ScrollView>
     </View>
   );
 };
@@ -41,18 +44,51 @@ const styles = StyleSheet.create({
   },
   HeaderText:{
     alignSelf: 'center',
-    fontSize: 20,
-    marginTop: 5,
+    fontSize: 25,
+    marginTop: 20,
+    marginBottom: 20,
     fontWeight: 'bold',
   },
   FavoritesContainer:{
-    alignItems: 'center',
-
-  },
-  favoritesContent:{
     
+   // borderWidth: 2,
+   // borderRadius: 5,
+    maxHeight: 600,
+    marginTop: 15,
+    backgroundColor: 'rgb(245,245,245)',
 
   },
+  FavoritesContentContainer:{
+    alignItems: 'center',
+  },
+  restOfItems:{
+    fontSize: 15,
+    marginTop: 10,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderRadius: 5,
+    padding: 2,
+    marginHorizontal: 40,
+  },
+  firstItem:{
+    fontSize: 15,
+    marginBottom: 8,
+    marginTop: 15,
+    borderWidth: 2,
+    borderRadius: 5,
+    padding: 2,
+    marginHorizontal: 40,
+
+  },
+  lastItem:{
+    fontSize: 15,
+    marginTop: 8,
+    marginBottom: 15,
+    borderWidth: 2,
+    borderRadius: 5,
+    padding: 2,
+    marginHorizontal: 40,
+  }
   
 } );
 
