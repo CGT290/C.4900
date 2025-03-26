@@ -1,26 +1,45 @@
-import { Text, View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard} from "react-native";
+import { Text, View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, TouchableOpacity} from "react-native";
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 import { useState } from "react";
+import { useRouter } from "expo-router";
 
 
-export default function Index() {
+
+export default function Index({}) {
   const [text, setText] = useState("");
+  const [favorites] = useState([]); //State for managing an array of favorites
+  const router = useRouter();
+
+function favoritesIconClick() {
+  //text.trim() removes leading space and also make sure its not an empty string
+  if (text.trim() && !favorites.includes(text.trim)) { //Additional statement (!) to ensure no duplicate
+    router.push({
+       pathname: "/Favorites",
+        params: { new_Favorites: text.trim() },
+       });
+    setText(""); //To clear the input after favorites icon has been clicked
+  }
+}
+console.log("Navigating to Favorites with params:", {
+  new_Favorites: text.trim(),
+});
 
   return (
     <KeyboardAvoidingView style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always"> 
           <View style={styles.inputWithIcon}>
-            <TextInput 
-              style={styles.TextInput} 
+            <TextInput style={styles.TextInput} 
               placeholder="Enter Destination" 
               onChangeText={setText} 
               value={text} 
               editable={true} 
-              keyboardType="default" focusable = {true}
+              keyboardType="default"
             />
+           <TouchableOpacity onPress={favoritesIconClick} accessibilityLabel="Add to Favorites">
             <AntDesign name="hearto" size={25} color="black" style={styles.FavoriteIcon} />
+           </TouchableOpacity>
           </View>
 
           <View style={styles.TextContainer}>
@@ -48,6 +67,8 @@ export default function Index() {
             <Text></Text>
             <Text></Text>
           </View>
+
+          
 
           
 
@@ -129,14 +150,7 @@ const styles = StyleSheet.create({
     right: 0,
     marginLeft: 10,
   },
-  gotToFeed:{
-    fontSize: 15,
-    textAlign: 'center',
-    paddingTop: 15,
-    textDecorationLine: 'underline'
-
-
-  }
+ 
  
 
 });
