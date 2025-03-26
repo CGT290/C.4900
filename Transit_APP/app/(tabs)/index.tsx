@@ -2,7 +2,9 @@ import { Text, View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, To
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 import { useState } from "react";
-import { useRouter } from "expo-router";
+
+//Keep Link hook for when i want to work on the not found page
+import { useRouter, Link } from "expo-router";
 
 
 
@@ -44,21 +46,32 @@ console.log("Navigating to Favorites with params:", {
 
           <View style={styles.TextContainer}>
             <Text style={styles.optionText}>Options</Text>
-            <Text style={styles.departText}>Departs In</Text>
+            <Text style={styles.departText}>Departs </Text>
           </View>
            
            
-          <View style={styles.TransportOptions}>
-            {/*This is just to get the idea of how the box will look will replace this soon */}
-            
+        <View style={styles.TransportOptions}>
+        {/* Wrapper for item and departure time */}
+        <View style={styles.itemWrapper}>
+
+        {/* itemsSymbols symbol for transport, where we'll style the train or bus symbols*/}
+        <View style={styles.itemContainer}>
+          <View style={styles.itemsSymbol}>
+            <Text style= {styles.symbolText}>B6</Text> 
           </View>
+         <Text style = {styles.locationText}>Location: (someLocation)</Text> 
+        </View>
 
-          
+  
+       <View style={styles.departureContainer}>
+        <Text>5 mins</Text> 
+       </View>
+     </View>
+      </View>
 
-          
 
-        </ScrollView>
-      </TouchableWithoutFeedback>
+      </ScrollView>
+    </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
@@ -72,7 +85,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     paddingHorizontal: 10,
-    marginTop: 10,
+    marginTop: 20,
     width: '90%',
     height: 35,
     
@@ -95,14 +108,13 @@ const styles = StyleSheet.create({
   },
   scrollContainer:{
     flexGrow: 1,// to make sure that our  scrollview  items are scrollable
-
   },
   
   TextContainer:{
     width: '98%', //adjusting the width between the 2 text
     position: 'relative',
     height: 50,
-
+    marginTop: 30,
   },
   optionText:{
     color: 'rgb(0,0,128)',
@@ -110,7 +122,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 5,
     fontSize: 25
-
   },
 
   departText:{
@@ -119,24 +130,73 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     fontSize: 25,
-    
-
   },
   TransportOptions:{
+    flex: 0.9,
     backgroundColor: 'white',
     borderRadius: 5,
     borderWidth: 0.8,
     padding: 15,
-    marginTop: 15,
-    maxHeight: 20,
-
+    marginTop: 20,
+    marginHorizontal: 15,
   },
   FavoriteIcon:{
     right: 0,
     marginLeft: 10,
   },
- 
- 
+  //only needed when testing page not found link, DO NOT REMOVE
+  gotToFeed:{
+    fontSize: 15,
+    textAlign: 'center',
+    paddingTop: 15,
+    textDecorationLine: 'underline',
+
+  },
+  itemWrapper: {
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginVertical: 8,
+  },
+  itemContainer: {
+    flexDirection: 'row', 
+    alignItems: 'center', // makes sure item (Location: (someLocation)) is centered 
+    padding: 7, // Space inside the container
+    borderWidth: 2,
+    borderRadius: 15,
+    flex: 1, // Allow itemContainer to grow and take up any available space
+    marginRight: 10, // Add space between itemContainer and departureContainer
+    
+  },
+  itemsSymbol: {
+    width: 25, // Circle diameter
+    height: 25, // To make the circle make sure its the same as width
+    borderRadius: 20, // Make it circular
+    borderWidth: 2, 
+    alignItems: 'center', //Same as justifyContent, push the item from left to the center
+    justifyContent: 'center', // To place the text B6 for example in the center of the container
+    backgroundColor: 'rgb(245,245,5)',
+    marginRight: 7, // To adjust the position of the location text next to the symbol
+  },
+  //to edit the text location
+  locationText: {
+    fontSize: 13.5, 
+    color: 'black',
+    fontWeight: 'bold',
+  },
+  departureContainer: {
+    backgroundColor: 'rgb(245,245,245)', 
+    padding: 5, 
+    borderRadius: 15, // making the corners of the container rounder
+    borderWidth: 2,
+    borderColor: 'black',
+  },
+
+  //to edit the text itemsSymbols
+  symbolText:{
+    fontSize: 10,
+    fontWeight:  'bold',
+  },
 
 });
 
