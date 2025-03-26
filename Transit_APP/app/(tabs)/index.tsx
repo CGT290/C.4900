@@ -8,12 +8,12 @@ import { useRouter } from "expo-router";
 
 export default function Index({}) {
   const [text, setText] = useState("");
-  const [favorites] = useState([]); //State for managing an array of favorites
+  //const [favorites] = useState([]); //State for managing an array of favorites
   const router = useRouter();
 
 function favoritesIconClick() {
   //text.trim() removes leading space and also make sure its not an empty string
-  if (text.trim() && !favorites.includes(text.trim)) { //Additional statement (!) to ensure no duplicate
+  if (text.trim()) { //Additional statement (!) to ensure no duplicate
     router.push({
        pathname: "/Favorites",
         params: { new_Favorites: text.trim() },

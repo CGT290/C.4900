@@ -1,12 +1,13 @@
 import React, { useEffect,useState} from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useSearchParams } from "expo-router";
+import { useLocalSearchParams } from 'expo-router';
+
 
 
 export default function FavoritesPage({})  {
-  //State for managing an array of favorites
+  //State for managing an array of favorites useState([])
   
-  const { new_Favorites } = useSearchParams(); // Retrieve query parameter
+  const {new_Favorites}  = useLocalSearchParams();
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
@@ -15,11 +16,7 @@ export default function FavoritesPage({})  {
     }
   }, [new_Favorites]);
 
-
-
-
-  //using format route.params.key to access our key in navigation.navigate() 
-  // key here is new_Favorites and  symbol is just apply opitional to its object
+  
  
 
   return (
@@ -27,9 +24,11 @@ export default function FavoritesPage({})  {
       <Text style = {styles.HeaderText}>Favorite Destinations</Text>
 
       <View style= {styles.FavoritesContainer}>
-        <Text> New Favorite: {new_Favorites}
-
-        </Text>
+        {favorites.map((item, index) => (
+          <Text key={index} style={styles.favoritesContent}
+          >{item}
+          </Text>
+        ))}
       </View>
     </View>
   );
@@ -47,6 +46,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   FavoritesContainer:{
+    alignItems: 'center',
+
+  },
+  favoritesContent:{
+    
 
   },
   
