@@ -1,80 +1,51 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator} from 'react-native';
 
 export default function LiveFeed(){
-  return (
-    <View style={styles.container}>
-      <Text style = {styles.HeadingText}>Live Feed</Text>
+  const [tweets, setTweets] = useState([]);
+  const [loading, setLoading] = useState(true); //loading state, don't forget to set it to false later(below), else the state will run endlessly
 
-      <ScrollView style = {styles.feedContainer} contentContainerStyle = {styles.scrollContents}>
-        <View style = {styles.smallerContainer}>
-        <Text style = {styles.textStyle}>Feed1 
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-        </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed2
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed3
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed4
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasdasdasdasdadsdasdasdasdasdasdasdasdasd
-          adasdasdasdasdadsadasd
-          </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed5
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed6
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed7
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed8
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed9
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          </Text>
-        </View>
-        <View style = {styles.smallerContainer}>
-          <Text style = {styles.textStyle}>Feed10
-          asdasdasdasdasdasd
-          asdasdasdasdasdasasdasdasdasdasasdasdasdasdasdasdayhygysdasdasd
-          </Text>
-        </View>
-        
+useEffect(() => {
+  const fetchTWEETS = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/fetched-tweets');
+      const data = await res.json();
+      console.log(data);
+      setTweets(data); // If we want to update the tweets state with fetched data
+    } catch (error) {
+      console.log('Got error while fetching tweets', error);
+    } finally {
+      console.log('A fetch attempt was done');
+      setLoading(false); //stop endless load state
+    }
+  };
+  fetchTWEETS(); 
+}, []);
+
+
+return (
+  <View style={styles.container}>
+    <Text style={styles.HeadingText}>Live Feed</Text>
+
+    {loading ? (
+      // Show ActivityIndicator while data is loading
+      <ActivityIndicator size="large" color="#0000ff" />
+    ) : (
+      //Container for the Rendered tweets once the loading is complete
+      <ScrollView style={styles.feedContainer}>
+        {tweets.map((tweet, index) => (
+          <View key={index} style={styles.smallerContainer}>
+            <Text style={styles.textStyle}>{tweet.text}</Text>
+            <Text style={styles.textStyle}>
+              Likes: {tweet.public_metrics.like_count} | Retweets: {tweet.public_metrics.retweet_count}
+            </Text>
+          </View>
+        ))}
       </ScrollView>
-    </View>
-  );
-};
+    )}
+  </View>
+);
+}
 
 const styles = StyleSheet.create({
   container: {

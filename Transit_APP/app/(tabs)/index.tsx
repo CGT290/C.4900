@@ -66,10 +66,14 @@ console.log("Navigating to Favorites with params:", {
        <View style={styles.departureContainer}>
         <Text>5 mins</Text> 
        </View>
-     </View>
+       
+       </View>
       </View>
 
 
+  
+
+      
       </ScrollView>
     </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
