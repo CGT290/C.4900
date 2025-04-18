@@ -37,9 +37,13 @@ yarn-error.*
 
 app-example
 
-# textfiles
+# textfiles and folders
 Useful_Info.txt
 
-server.js
+Server.js
 
 Text.txt
+
+Backend
+
+Notes
