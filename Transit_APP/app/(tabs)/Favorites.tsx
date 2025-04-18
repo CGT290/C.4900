@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
-//import { useLocalSearchParams } from 'expo-router'; horrible for managing a list across different pages, don't ever use again
+import { View, Text, StyleSheet, ScrollView, Pressable} from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useFavorites } from './FavoritesContext';
-
 
 export default function FavoritesPage({}) {
   // State for managing an array of favorites
   
   const { favorites, removeFavorite } = useFavorites(); // Access the global favorites context
    
-  
   return (
     <View style={styles.container}>
       <Text style={styles.HeaderText}>Favorite Destinations</Text>
