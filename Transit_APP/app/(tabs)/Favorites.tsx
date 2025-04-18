@@ -1,37 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+//import { useLocalSearchParams } from 'expo-router'; horrible for managing a list across different pages, don't ever use again
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useFavorites } from './FavoritesContext';
+
 
 export default function FavoritesPage({}) {
   // State for managing an array of favorites
-  const { new_Favorites } = useLocalSearchParams();
-  const [favorites, setFavorites] = useState([]);
-
-  // Function to check and add favorites
-  const addToFavorites = (newFavorite) => {
-    if (favorites.includes(newFavorite)) {
-      Alert.alert("Duplicate", "This item is already in your favorites list.");
-    } else {
-      setFavorites((prevFavorites) => [...prevFavorites, newFavorite]);
-    }
-  };
   
-
+  const { favorites, removeFavorite } = useFavorites(); // Access the global favorites context
+   
   
-  useEffect(() => {
-    if (new_Favorites) {
-      addToFavorites(new_Favorites);
-    }
-  }, [new_Favorites]);
-
-  // Function to remove items
-  const removeFavorite = (item) => {
-    setFavorites((prevFavorites) =>
-      prevFavorites.filter((favorite) => favorite !== item)
-    );
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.HeaderText}>Favorite Destinations</Text>
