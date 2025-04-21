@@ -31,6 +31,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
@@ -40,10 +41,17 @@ app-example
 # textfiles and folders
 Useful_Info.txt
 
-Server.js
+
 
 Text.txt
 
-Backend
+#Backend
+rssNote.txt
+TweetFetch.json
+SubwayTweets
 
+
+
+#Notes
 Notes
+
