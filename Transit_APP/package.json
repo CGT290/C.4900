@@ -25,6 +25,7 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/material-top-tabs": "^7.2.3",
     "@react-navigation/native": "^7.0.14",
+    "apify-client": "^2.12.2",
     "axios": "^1.8.4",
     "cheerio": "^1.0.0",
     "dotenv": "^16.5.0",
