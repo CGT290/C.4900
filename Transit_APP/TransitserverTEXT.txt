@@ -1,0 +1,238 @@
+/*
+textFile of the transit server, Latest version of the server as of 4/30/25
+
+IMPORTANT Remainder: Delete this and the WorkingStaticServer text file once im done working on the server
+and have removed both the js files from ignore file
+
+Note that the calls for bus-arrival, gtfs-stops, and bus options are working but not subway-arrival.
+The output for the 3 have also been formated in a manner in which its easer to read the json data
+
+Bus arrival need a slight fix: turning the time from 24 hr to 12 hr EDT format
+
+*/
+
+const express = require('express');
+require('dotenv').config(); 
+const cors = require('cors');
+const axios = require('axios');
+const path = require('path'); 
+const fs = require('fs'); // fs is used to read the static GTFS data and  allows us to use fs.existsSync to check if the file exists before reading it et fs.readFileSync().
+
+const app = express();
+app.use(cors()); 
+const PORT = 5000; 
+
+const API_KEY = process.env.MTA_BUS_TIME_API_KEY;
+
+const cache = {}; // to store the bus stop data in memory to reduce API calls
+
+function  convertTimeToEDT12hr(time){
+    const date = new Date(time);
+    const option = { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'America/New_York' };
+    return date.toLocaleString('en-US', option);
+}
+
+// This processes stopData to get the relevant information for bus arrival times, 
+//each object returned represents a bus stop and its relevant information
+function parseBusArrivalData(stopData) {
+    //iterating through the stop data and extracting the relevant information
+    return stopData.map(stop => {
+        //This variable is just to shorten calls to MonitoredVehicleJourney and MonitoredCall
+        const MonitoredCall = stop?.MonitoredVehicleJourney?.MonitoredCall || {};
+        return {
+            // gets the stop name, defaults is "Unknown Stop" if its not their, the rest of the return objects are self-explanatory
+            stopID: MonitoredCall.StopPointName || "Unknown Stop", 
+            arrivalTime: MonitoredCall.ExpectedArrivalTime ? convertTimeToEDT12hr(MonitoredCall.ExpectedArrivalTime) : "Expected Arrival Time not available",
+            line: stop?.MonitoredVehicleJourney?.PublishedLineName || "Unknown Route", //gets the bus line, example: B6, B11, etc
+            destination: MonitoredCall.DestinationDisplay || stop?.MonitoredVehicleJourney?.DestinationName || "Unknown Destination",
+            distanceFromStop: MonitoredCall.DistanceFromStop || "Data not available",
+            vehiclePosition: { // gets current location of vehicle via latitude and longitude
+                latitude: stop?.MonitoredVehicleJourney?.VehicleLocation?.Latitude || "Unknown Latitude",
+                longitude: stop?.MonitoredVehicleJourney?.VehicleLocation?.Longitude || "Unknown Longitude"
+            }
+        };
+    }).filter(entry => entry.arrivalTime !== "Unknown Arrival Time"); // Removes entries missing valid arrival times
+}
+
+
+// To fetch real-time bus arrival data from the MTA Bus Time API. Data like bus stop ID, arrival time, line, destination, distance from stop, and vehicle position.
+app.get('/bus-arrival/:stopID', async (req, res) => {
+    const stopID = req.params.stopID;
+    const url = `https://bustime.mta.info/api/siri/stop-monitoring.json?key=${API_KEY}&MonitoringRef=${stopID}`;
+
+    try {
+        const response = await axios.get(url);
+        
+        let stopData = response.data?.Siri?.ServiceDelivery?.StopMonitoringDelivery?.[0]?.MonitoredStopVisit;
+
+    
+        if(!Array.isArray(stopData)) {
+          stopData = stopData ? [stopData] : []; // If stopData is not an array, wrap it in an array
+        }
+
+        if(stopData.length === 0) {
+            return res.status(200).json({message: 'No data found, its possible that bus line is not operating right now'});
+        }
+     
+       //Converting json data to string and formating it to be more readable by adding new lines and spaces between the objects
+       const formattedData = stopData.map(entry => {
+        const vehicleJourney = entry?.MonitoredVehicleJourney || {};
+        const lines = [
+            `LineRef: ${vehicleJourney.LineRef || 'Unknown'}`,
+            `DirectionRef: ${vehicleJourney.DirectionRef || 'Unknown'}`,
+            `PublishedLineName: ${vehicleJourney.PublishedLineName || 'Unknown'}`,
+            `DestinationName: ${vehicleJourney.DestinationName || 'Unknown'}`,
+            `OriginAimedDepartureTime: ${vehicleJourney.OriginAimedDepartureTime || 'Unknown'}`,
+            `VehicleLocation: ${JSON.stringify(vehicleJourney.VehicleLocation || {})}`,
+            '-----------------'
+        ];
+        return lines.join('\n');
+    }).join('\n\n');
+
+    res.header('Content-Type', 'text/plain');
+    res.status(200).send(formattedData);
+
+} catch (error) {
+    console.error("Error fetching bus time:", error.message);
+    return res.status(500).json({ error: error.message });
+}
+});
+
+
+// To fetch the static GTFS data for bus stop locations, since BUS Time API does not provide stop locations
+app.get('/gtfs-stops', async (req, res) => {
+    try {
+        // Storing the path of a specific file and checking if it exists
+        const filePath = path.join(__dirname, 'stops.json');  
+        if (!fs.existsSync(filePath)) 
+            return res.status(404).json({ error: 'file not found' });
+
+        // Reading the file and parsing the JSON data to be a JS object
+        const stopsData = fs.readFileSync(filePath, 'utf8');
+        const stops = JSON.parse(stopsData);
+
+        
+       const filteredStops = stops.map(entry => {
+        const cleanedEntry = {...entry }; // for the shallow copy of the entry object
+
+        ['stop_desc', 'zone_id', 'stop_url', 'parent_station', ].forEach(field => {
+            if(cleanedEntry[field] === "") {
+                delete cleanedEntry[field]; // remove the field if its empty
+            }
+
+
+       });
+        return cleanedEntry; // return the cleaned entry object
+       });
+
+       // Formated data to make it more readable by adding new lines and spaces between the objects
+
+       const formatData = filteredStops.map(entry => {
+           const lines = Object.entries(entry).map(([key, value]) => `${key}: ${value}`); // convert each entry to a string
+              return lines.join('\n') + '\n-----------------'; // join the lines with new line characters
+       }).join('\n\n'); // join the formatted entries with new lines between them
+
+        res.header('Content-Type', 'text/plain'); // Set the content type to plain text
+
+        //using .send instead of .json cause .json is designed to send JSON data, while .send can send any type of data, rn our data is converted to strings
+        res.status(200).send(formatData); // Return the GTFS data for bus stops
+    } catch (error) {
+        console.error('Error fetching GTFS stops:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// To accepts user current location and destination stop ID, Its fetching real-time bus arrival data dynamically from the MTA Bus Time API and GTFS data for bus stop locations
+// will also be caching this part to reduce API calls
+app.get('/bus-options', async (req, res) => {
+    const {destination} = req.query; 
+
+    if(!destination) {
+        return res.status(400).json({ error: 'Please provide your destination.' });
+    }
+    
+    try{
+        const url = `https://bustime.mta.info/api/siri/stop-monitoring.json?key=${API_KEY}&MonitoringRef=${destination}`;
+        const response = await axios.get(url);
+        let stopData = response.data?.Siri?.ServiceDelivery?.StopMonitoringDelivery?.[0]?.MonitoredStopVisit;
+        
+        if(!Array.isArray(stopData)) {
+            stopData = stopData ? [stopData] : []; // If stopData is not an array, wrap it in an array
+          }
+  
+          if(stopData.length === 0) {
+              return res.status(200).json({message: 'No data found, its possible that bus line is not operating right now'});
+          }
+
+        // parse data for relevant info regarding arrivals and sort them in ascending order of arrival time
+        
+        //.sort((a, b) => new Date(a.arrivalTime) - new Date(b.arrivalTime)); , negative value means a is before b, positive value means a is after b
+        const arrivals = parseBusArrivalData(stopData).sort((a, b) => new Date(a.arrivalTime) - new Date(b.arrivalTime));
+        
+       //formating arrivals data to be more readable by adding new lines and spaces between the objects
+        const formattedData = arrivals.map(entry => {
+            const vehiclePosition = JSON.stringify(entry.vehiclePosition);
+            const lines = [
+                `stopID: ${entry.stopID}`,
+                `arrivalTime: ${entry.arrivalTime}`,
+                `line: ${entry.line}`,
+                `destination: ${entry.destination}`,
+                `distanceFromStop: ${entry.distanceFromStop}`,
+                `vehiclePosition: ${vehiclePosition}`,
+                '-----------------',
+            ]
+            return lines.join('\n'); 
+        }).join('\n\n'); 
+
+        cache[destination] = formattedData; // Cache the data for future requests
+        res.header('Content-Type', 'text/plain');
+        res.status(200).send(formattedData);
+        
+    }catch (error) {
+        console.error("Error fetching bus time:", error.message);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+//Function to fetch subways arrival predictions using the endpoints given by MTA
+async function fetchSubwayArrival(endpointURL){
+    try{
+        const response = await axios.get(endpointURL, {
+            headers: { "x-api-key": API_KEY }
+        });
+        
+        return response.data;
+
+    }catch(error){
+        console.error("Error fetching subway arrival data:", error.message);
+        return null;
+    }
+}
+
+app.get('/subway-arrival/:trainLines', async (req, res) => {
+    const trainLines = req.params.trainLines;
+    const Train_Feeds = {
+        'Subway_ACE': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace', //For A,C,E trains and S^R rail 
+        'Subway_G': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-g', //G train
+        'Subway_NQRW': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-nqrw', //N,Q,R,W trains 
+        'Subway_1-7': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs', //1,2,3,4,5,6,7 trains and S 
+        'Subway_BDFM': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-bdfm', //B,D,F,M trains and S^F
+        'Subway_JZ': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-jz', //J,Z trains
+        'Subway_L': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-l', //L train
+        'Subway_SIR': 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-si', //SIR train
+    };
+
+    const endpointURL = Train_Feeds[trainLines];
+    if (!endpointURL) {
+        return res.status(400).json({ error: 'Invalid train line provided.' });
+    }
+
+    const subwayData = await fetchSubwayArrival(endpointURL);
+    res.status(200).json(subwayData); // Return the fetched subway data
+});
+
+app.listen(PORT, () => {
+    console.log(`Transit server is running on port ${PORT}`);
+
+});
