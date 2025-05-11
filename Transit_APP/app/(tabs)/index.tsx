@@ -1,76 +1,141 @@
 // app/tabs/index.tsx
-import { Text, View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Alert } from "react-native";
+import { Text, View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Alert, Button } from "react-native";
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { useState } from "react";
-import { useFavorites } from "./FavoritesContext"; // Import global favorites context
+import { useState, useEffect } from "react";
+import { useFavorites } from "./FavoritesContext"; 
+import * as SQLite from 'expo-sqlite';
+const db = SQLite.openDatabase('transit.db');
+
+const API_URL = `http://192.168.86.138:5000`;
+
+
 
 export default function Index({}) {
-  const [text, setText] = useState("");
-  const { addFavorite } = useFavorites(); // Access the global addFavorite function
+    const [text, setText] = useState("");
+    const { addFavorite } = useFavorites();
+    const [busData, setBusData] = useState([]);
 
-  const favoritesIconClick = () => {
-    if (text.trim()) { // Ensure input is not empty
-      const added = addFavorite(text.trim()); // Add to favorites, check for duplicates
-      if (!added) {
-        Alert.alert("Duplicate", "This item is already in your favorites list.");
-      }
-      setText(""); // Clear the input field
-    }
-  };
+    useEffect(() => {
+        setupDatabase();
+    }, []);
 
-  return (
-    <KeyboardAvoidingView style={styles.container}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always"> 
-          <View style={styles.inputWithIcon}>
-            <TextInput style={styles.TextInput} 
-              placeholder="Enter Destination" 
-              onChangeText={setText} 
-              value={text} 
-              editable={true} 
-              keyboardType="default"
-            />
-           <TouchableOpacity onPress={favoritesIconClick} accessibilityLabel="Add to Favorites">
-            <AntDesign name="hearto" size={25} color="black" style={styles.FavoriteIcon} />
-           </TouchableOpacity>
-          </View>
+    const setupDatabase = () => {
+        db.transaction(tx => {
+            tx.executeSql(
+                `CREATE TABLE IF NOT EXISTS buses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    stopID TEXT,
+                    arrivalTime TEXT,
+                    line TEXT,
+                    destination TEXT,
+                    direction TEXT,
+                    latitude REAL,
+                    longitude REAL
+                );`
+            );
+        });
+    };
 
-          <View style={styles.TextContainer}>
-            <Text style={styles.optionText}>Options</Text>
-            <Text style={styles.departText}>Departs </Text>
-          </View>
-           
-           
-        <View style={styles.TransportOptions}>
-        {/* Wrapper for item and departure time */}
-        <View style={styles.itemWrapper}>
+    const fetchTransitOptions = async () => {
+        if (!text) return;
 
-        {/* itemsSymbols symbol for transport, where we'll style the train or bus symbols*/}
-        <View style={styles.itemContainer}>
-          <View style={styles.itemsSymbol}>
-            <Text style= {styles.symbolText}>B6</Text> 
-          </View>
-         <Text style = {styles.locationText}>Location: (someLocation)</Text> 
-        </View>
+        try {
+            const response = await fetch(`${API_URL}/search-transit/${text}`);
+            const data = await response.json();
 
-  
-       <View style={styles.departureContainer}>
-        <Text>5 mins</Text> 
-       </View>
-       
-       </View>
-      </View>
+            // Insert into SQLite
+            data.forEach(bus => {
+                db.transaction(tx => {
+                    tx.executeSql(
+                        `INSERT INTO buses (stopID, arrivalTime, line, destination, direction, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?);`,
+                        [bus.stopID, bus.arrivalTime, bus.line, bus.destination, bus.direction, bus.latitude, bus.longitude],
+                        (_, result) => console.log(`Inserted Bus Data:`, result),
+                        (_, error) => console.error("Error inserting bus data:", error)
+                    );
+                });
+            });
 
+            getUpcomingTransit(text); 
+        } catch (error) {
+            console.error("Error fetching transit options:", error);
+        }
+    };
 
-  
+    const getUpcomingTransit = (destination) => {
+        const currentTime = new Date();
+        const formattedTime = `${currentTime.getHours()}:${currentTime.getMinutes() < 10 ? '0' + currentTime.getMinutes() : currentTime.getMinutes()}`;
 
-      
-      </ScrollView>
-    </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
-  );
+        db.transaction(tx => {
+            tx.executeSql(
+                `SELECT * FROM buses WHERE LOWER(destination) LIKE LOWER(?) AND arrivalTime > ? ORDER BY arrivalTime ASC;`,
+                [`%${destination.toLowerCase()}%`, formattedTime],
+                (_, result) => setBusData(result.rows._array),
+                (_, error) => console.error("Error fetching transit options:", error)
+            );
+        });
+    };
+
+    const favoritesIconClick = () => {
+        if (text.trim()) {
+            const added = addFavorite(text.trim());
+            if (!added) {
+                Alert.alert("Duplicate", "This item is already in your favorites list.");
+            }
+            setText("");
+        }
+    };
+
+    return (
+        <KeyboardAvoidingView style={styles.container}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always"> 
+                    <View style={styles.inputWithIcon}>
+                        <TextInput style={styles.TextInput} 
+                            placeholder="Enter Destination" 
+                            onChangeText={(newText)=>{ setText(newText); fetchTransitOptions(); }} 
+                            value={text} 
+                            editable={true} 
+                            keyboardType="default"
+                        />
+                        <TouchableOpacity onPress={favoritesIconClick} accessibilityLabel="Add to Favorites">
+                            <AntDesign name="hearto" size={25} color="black" style={styles.FavoriteIcon} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.TextContainer}>
+                        <Text style={styles.optionText}>Options</Text>
+                        <Text style={styles.departText}>Departs </Text>
+                    </View>
+
+                    <View style={styles.TransportOptions}>
+                        {busData.length > 0 ? (
+                            busData.map((option, index) => (
+                                <View key={index} style={styles.itemWrapper}>
+                                    <View style={styles.itemContainer}>
+                                        <View style={styles.itemsSymbol}>
+                                            <Text style={styles.symbolText}>{option.line || option.routeId}</Text> 
+                                        </View>
+                                        <Text style={styles.locationText}>{option.destination || option.stopId}</Text> 
+                                    </View>
+                                    <View style={styles.departureContainer}>
+                                        <Text>{option.arrivalTime ? `${option.arrivalTime}` : "Unknown Arrival"}</Text> 
+                                    </View>
+                                    {option.departureTime && (
+                                        <View style={styles.departureContainer}>
+                                            <Text>{option.departureTime ? `${option.departureTime}` : "Unknown Departure"}</Text> 
+                                        </View>
+                                    )}
+                                </View>
+                            ))
+                        ) : (
+                            <Text>No transit options found.</Text>
+                        )}
+                    </View>
+                </ScrollView>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+    );
 }
-
 
 const styles = StyleSheet.create({
   inputWithIcon:{
