@@ -65,7 +65,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column', //to adjust the content(text in this case) to be top-bottom
    // borderWidth: 0, keep this commented this is to make the border visible for testing purposes
     borderRadius: 5,
-    backgroundColor: 'rgb(136, 113, 113)', //keep this planning to change background color soon
     marginTop: 0,
     marginHorizontal: 11,
     

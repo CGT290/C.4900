@@ -38,4 +38,4 @@ export function useFavorites() {
     return useContext(FavoritesContext);
 }
 //get this warning if i dont add this: Route "./(tabs)/FavoritesContext.tsx" is missing the required default export. Ensure a React component is exported as default. [Component Stack]
-export default FavoritesContext;
+//export default FavoritesContext;
