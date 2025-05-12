@@ -1,154 +1,123 @@
 // app/tabs/index.tsx
-import { Text, View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Alert } from "react-native";
-import AntDesign from '@expo/vector-icons/AntDesign';
-import { useState,useEffect} from "react";
-import { useFavorites } from "./FavoritesContext"; // Import global favorites context
-import db, { setupDatabase, getTransportOptions } from './database';
-
-
+import React, { useEffect, useState } from "react"
+import {
+  Text,
+  View,
+  ScrollView,
+  TextInput,
+  StyleSheet,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  TouchableOpacity,
+  Alert,
+  Button,
+} from "react-native"
+import AntDesign from '@expo/vector-icons/AntDesign'
+import { useFavorites } from "./FavoritesContext"
+import {
+  setupDatabase,
+  insertBus,
+  getUpcomingBuses,
+} from "./database"
 
 export default function Index() {
-  const [text, setText] = useState('');
-  const { addFavorite } = useFavorites(); // Access the global addFavorite function
-  const [busData, setBusData] = useState([]);
-
-  
-
-  const favoritesIconClick = () => {
-    if (text.trim()) { // Ensure input is not empty
-      const added = addFavorite(text.trim()); // Add to favorites, check for duplicates
-      if (!added) {
-        Alert.alert("Duplicate", "This item is already in your favorites list.");
-      }
-      setText(""); // Clear the input field
-    }
-  };
-
+  const [text, setText] = useState("")
+  const { addFavorite } = useFavorites()
+  const [busData, setBusData] = useState([])
 
   useEffect(() => {
-    setupDatabase();
+    setupDatabase().catch(console.error)
+  }, [])
 
-    db.exec([
-      {
-        sql: `
-          CREATE TABLE IF NOT EXISTS buses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            stopID TEXT,
-            arrivalTime TEXT,
-            line TEXT,
-            destination TEXT,
-            direction TEXT,
-            latitude REAL,
-            longitude REAL
-          );
-        `,
-        args: [],
-      },
-    ]);
-  }, []);
+  const favoritesIconClick = () => {
+    if (text.trim()) {
+      const added = addFavorite(text.trim())
+      if (!added) {
+        Alert.alert("Duplicate", "This item is already in your favorites list.")
+      }
+      setText("")
+    }
+  }
 
   const fetchTransitOptions = async () => {
-    if (!text) return;
+    if (!text) return
 
     try {
-      const response = await fetch(`https://your-api.com/search-transit/${text}`);
-      const data = await response.json();
+      const response = await fetch(`https://your-api.com/search-transit/${text}`)
+      const data = await response.json()
 
-      data.forEach(bus => {
-        db.exec([
-          {
-            sql: `INSERT INTO buses 
-                  (stopID, arrivalTime, line, destination, direction, latitude, longitude) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?);`,
-            args: [
-              bus.stopID,
-              bus.arrivalTime,
-              bus.line,
-              bus.destination,
-              bus.direction,
-              bus.latitude,
-              bus.longitude,
-            ],
-          },
-        ]);
-      });
+      // save each bus row
+      for (const bus of data) {
+        await insertBus(bus)
+      }
 
-      getUpcomingTransit(text);
+      // then reload from SQLite
+      const rows = await getUpcomingBuses(text)
+      setBusData(rows)
     } catch (error) {
-      console.error("API fetch failed:", error);
+      console.error("API fetch failed:", error)
     }
-  };
+  }
 
-  const getUpcomingTransit = (destination) => {
-    const now = new Date();
-    const formattedTime = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+  return (
+    <KeyboardAvoidingView style={styles.container}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="always"
+        >
+          <View style={styles.inputWithIcon}>
+            <TextInput
+              style={styles.TextInput}
+              placeholder="Enter Destination"
+              onChangeText={setText}
+              value={text}
+              keyboardType="default"
+            />
+            <TouchableOpacity onPress={favoritesIconClick} accessibilityLabel="Add to Favorites">
+              <AntDesign name="hearto" size={25} color="black" style={styles.FavoriteIcon} />
+            </TouchableOpacity>
+            <Button title="Search" onPress={fetchTransitOptions} />
+          </View>
 
-    try {
-      const results = db.getAllSync(
-        `SELECT * FROM buses WHERE LOWER(destination) LIKE LOWER(?) AND arrivalTime > ? ORDER BY arrivalTime ASC;`,
-        [`%${destination.toLowerCase()}%`, formattedTime]
-      );
-      setBusData(results);
-    } catch (error) {
-      console.error("Failed to query buses:", error);
-    }
-  };
+          <View style={styles.TextContainer}>
+            <Text style={styles.optionText}>Options</Text>
+            <Text style={styles.departText}>Departs</Text>
+          </View>
 
-  
-    return (
-        <KeyboardAvoidingView style={styles.container}>
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always"> 
-                    <View style={styles.inputWithIcon}>
-                        <TextInput style={styles.TextInput} 
-                            placeholder="Enter Destination" 
-                            onChangeText={(newText)=>{ setText(newText); fetchTransitOptions(); }} 
-                            value={text} 
-                            editable={true} 
-                            keyboardType="default"
-                        />
-                        <TouchableOpacity onPress={favoritesIconClick} accessibilityLabel="Add to Favorites">
-                            <AntDesign name="hearto" size={25} color="black" style={styles.FavoriteIcon} />
-                        </TouchableOpacity>
+          <View style={styles.TransportOptions}>
+            {busData.length > 0 ? (
+              busData.map((option, idx) => (
+                <View key={idx} style={styles.itemWrapper}>
+                  <View style={styles.itemContainer}>
+                    <View style={styles.itemsSymbol}>
+                      <Text style={styles.symbolText}>{option.line}</Text>
                     </View>
-
-                    <View style={styles.TextContainer}>
-                        <Text style={styles.optionText}>Options</Text>
-                        <Text style={styles.departText}>Departs </Text>
+                    <Text style={styles.locationText}>{option.destination}</Text>
+                  </View>
+                  <View style={styles.departureContainer}>
+                    <Text>{option.arrivalTime || "Unknown Arrival"}</Text>
+                  </View>
+                  {option.departureTime && (
+                    <View style={styles.departureContainer}>
+                      <Text>{option.departureTime || "Unknown Departure"}</Text>
                     </View>
-
-                    <View style={styles.TransportOptions}>
-                        {busData.length > 0 ? (
-                            busData.map((option, index) => (
-                                <View key={index} style={styles.itemWrapper}>
-                                    <View style={styles.itemContainer}>
-                                        <View style={styles.itemsSymbol}>
-                                            <Text style={styles.symbolText}>{option.line || option.routeId}</Text> 
-                                        </View>
-                                        <Text style={styles.locationText}>{option.destination || option.stopId}</Text> 
-                                    </View>
-                                    <View style={styles.departureContainer}>
-                                        <Text>{option.arrivalTime ? `${option.arrivalTime}` : "Unknown Arrival"}</Text> 
-                                    </View>
-                                    {option.departureTime && (
-                                        <View style={styles.departureContainer}>
-                                            <Text>{option.departureTime ? `${option.departureTime}` : "Unknown Departure"}</Text> 
-                                        </View>
-                                    )}
-                                </View>
-                            ))
-                        ) : (
-                            <Text>No transit options found.</Text>
-                        )}
-                    </View>
-                </ScrollView>
-            </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-    );
+                  )}
+                </View>
+              ))
+            ) : (
+              <Text>No transit options found.</Text>
+            )}
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+  )
 }
 
 const styles = StyleSheet.create({
-  inputWithIcon:{
+  inputWithIcon: {
     flexDirection: 'row',
     alignSelf: 'center',
     alignItems: 'center',
@@ -159,7 +128,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: '90%',
     height: 35,
-    
   },
   TextInput: {
     flex: 1,
@@ -167,42 +135,36 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     fontSize: 18,
     backgroundColor: 'transparent',
-
   },
-
-  container:{
+  container: {
     flex: 1,
-    backgroundColor: 'rgb(245,245,245)',    //'rgb(10,30,50)' other option
+    backgroundColor: 'rgb(245,245,245)',
     alignContent: 'center',
-    
-    
   },
-  scrollContainer:{
-    flexGrow: 1,// to make sure that our  scrollview  items are scrollable
+  scrollContainer: {
+    flexGrow: 1,
   },
-  
-  TextContainer:{
-    width: '98%', //adjusting the width between the 2 text
+  TextContainer: {
+    width: '98%',
     position: 'relative',
     height: 50,
     marginTop: 30,
   },
-  optionText:{
+  optionText: {
     color: 'rgb(0,0,128)',
     marginTop: 30,
     position: 'absolute',
     left: 5,
-    fontSize: 25
+    fontSize: 25,
   },
-
-  departText:{
+  departText: {
     color: "rgb(0,0,128)",
     marginTop: 30,
     position: 'absolute',
     right: 0,
     fontSize: 25,
   },
-  TransportOptions:{
+  TransportOptions: {
     flex: 0.9,
     backgroundColor: 'white',
     borderRadius: 5,
@@ -211,62 +173,49 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginHorizontal: 15,
   },
-  FavoriteIcon:{
+  FavoriteIcon: {
     right: 0,
     marginLeft: 10,
   },
-  //only needed when testing page not found link, DO NOT REMOVE
-  gotToFeed:{
-    fontSize: 15,
-    textAlign: 'center',
-    paddingTop: 15,
-    textDecorationLine: 'underline',
-
-  },
   itemWrapper: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginVertical: 8,
   },
   itemContainer: {
-    flexDirection: 'row', 
-    alignItems: 'center', // makes sure item (Location: (someLocation)) is centered 
-    padding: 7, // Space inside the container
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 7,
     borderWidth: 2,
     borderRadius: 15,
-    flex: 1, // Allow itemContainer to grow and take up any available space
-    marginRight: 10, // Add space between itemContainer and departureContainer
-    
+    flex: 1,
+    marginRight: 10,
   },
   itemsSymbol: {
-    width: 25, // Circle diameter
-    height: 25, // To make the circle make sure its the same as width
-    borderRadius: 20, // Make it circular
-    borderWidth: 2, 
-    alignItems: 'center', //Same as justifyContent, push the item from left to the center
-    justifyContent: 'center', // To place the text B6 for example in the center of the container
+    width: 25,
+    height: 25,
+    borderRadius: 20,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'rgb(245,245,5)',
-    marginRight: 7, // To adjust the position of the location text next to the symbol
+    marginRight: 7,
   },
-  //to edit the text location
   locationText: {
-    fontSize: 13.5, 
+    fontSize: 13.5,
     color: 'black',
     fontWeight: 'bold',
   },
   departureContainer: {
-    backgroundColor: 'rgb(245,245,245)', 
-    padding: 5, 
-    borderRadius: 15, // making the corners of the container rounder
+    backgroundColor: 'rgb(245,245,245)',
+    padding: 5,
+    borderRadius: 15,
     borderWidth: 2,
     borderColor: 'black',
   },
-
-  //to edit the text itemsSymbols
-  symbolText:{
+  symbolText: {
     fontSize: 10,
-    fontWeight:  'bold',
+    fontWeight: 'bold',
   },
-
-});
+})

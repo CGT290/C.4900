@@ -1,63 +1,72 @@
-// database.js
-import * as SQLite from 'expo-sqlite/legacy';
+// app/tabs/database.js
+import * as SQLite from 'expo-sqlite';
 
-const db = SQLite.openDatabase('transit.db'); // ← now ‘db.transaction’, ‘db.exec’, etc. exist
+const DB_NAME = 'transit.db'
+let dbHandle = null
 
-export const setupDatabase = () => {
-  db.transaction(tx => {
-    tx.executeSql(`
-      CREATE TABLE IF NOT EXISTS transport_options (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        transportType TEXT,
-        stopID TEXT,
-        arrivalTime TEXT,
-        departureTime TEXT,
-        line TEXT,
-        destination TEXT,
-        latitude REAL,
-        longitude REAL
-      );
-    `);
-  });
-};
+async function getDb() {
+  if (!dbHandle) {
+    dbHandle = await SQLite.openDatabaseAsync(DB_NAME)
+  }
+  return dbHandle
+}
 
-export const insertTransportOption = (option) => {
-  db.transaction(tx => {
-    tx.executeSql(
-      `INSERT INTO transport_options 
-         (transportType, stopID, arrivalTime, departureTime, line, destination, latitude, longitude)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        option.transportType,
-        option.stopID,
-        option.arrivalTime,
-        option.departureTime,
-        option.line,
-        option.destination,
-        option.latitude,
-        option.longitude,
-      ]
+/**
+ * Create the buses table if it doesn't exist.
+ */
+export async function setupDatabase() {
+  const db = await getDb()
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS buses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      stopID TEXT,
+      arrivalTime TEXT,
+      line TEXT,
+      destination TEXT,
+      direction TEXT,
+      latitude REAL,
+      longitude REAL
     );
-  });
-};
+  `)
+}
 
-export const getTransportOptions = (destination, transportType) =>
-  new Promise((resolve, reject) => {
-    const now = new Date();
-    const formatted = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+/**
+ * Insert a single bus record.
+ * @param {{stopID:string,arrivalTime:string,line:string,destination:string,direction:string,latitude:number,longitude:number}} bus
+ */
+export async function insertBus(bus) {
+  const db = await getDb()
+  await db.runAsync(
+    `INSERT INTO buses
+       (stopID, arrivalTime, line, destination, direction, latitude, longitude)
+     VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    bus.stopID,
+    bus.arrivalTime,
+    bus.line,
+    bus.destination,
+    bus.direction,
+    bus.latitude,
+    bus.longitude
+  )
+}
 
-    db.transaction(tx => {
-      tx.executeSql(
-        `SELECT * FROM transport_options
-         WHERE LOWER(destination) LIKE LOWER(?)
-           AND transportType = ?
-           AND arrivalTime > ?
-         ORDER BY arrivalTime ASC;`,
-        [`%${destination}%`, transportType, formatted],
-        (_, { rows: { _array } }) => resolve(_array),
-        (_, error) => reject(error)
-      );
-    });
-  });
+/**
+ * Fetch upcoming buses matching `dest` and departure time > now.
+ * @param {string} dest
+ * @returns {Promise<Array>}
+ */
+export async function getUpcomingBuses(dest) {
+  const db = await getDb()
+  const now = new Date()
+  const formatted = `${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`
 
-  export default db;
+  return db.getAllAsync(
+    `SELECT *
+       FROM buses
+      WHERE LOWER(destination) LIKE LOWER(?)
+        AND arrivalTime > ?
+      ORDER BY arrivalTime ASC;`,
+    `%${dest}%`,
+    formatted
+  )
+}
